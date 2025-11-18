@@ -239,6 +239,11 @@ export class VimState implements vscode.Disposable {
           : vscode.TextEditorLineNumbersStyle.Relative;
     }
 
+    // enable disable inline suggestions based on the mode.
+    await vscode.workspace
+      .getConfiguration()
+      .update('editor.inlineSuggest.enabled', modeData.mode === Mode.Insert);
+
     this.modeData = modeData;
   }
 
