@@ -240,9 +240,11 @@ export class VimState implements vscode.Disposable {
     }
 
     // enable disable inline suggestions based on the mode.
-    await vscode.workspace
-      .getConfiguration()
-      .update('editor.inlineSuggest.enabled', modeData.mode === Mode.Insert);
+    if (modeData.mode === Mode.Insert) {
+      await vscode.commands.executeCommand('editor.action.inlineSuggest.cancelSnooze');
+    } else {
+      await vscode.commands.executeCommand('editor.action.inlineSuggest.snooze', 1440);
+    }
 
     this.modeData = modeData;
   }
