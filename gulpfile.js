@@ -7,6 +7,9 @@ const minimist = require('minimist');
 const path = require('path');
 const es = require('event-stream');
 const shell = require('gulp-shell');
+const fs = require('fs');
+const https = require('https');
+const http = require('http');
 
 const releaseOptions = {
   semver: '',
@@ -59,6 +62,9 @@ function updatePath() {
         path.resolve(process.cwd(), 'out/src/platform/node'),
       );
       platformRelativepath = platformRelativepath.replace(/\\/g, '/');
+      if (platformRelativepath && !platformRelativepath.startsWith('..')) {
+        platformRelativepath = './' + platformRelativepath;
+      }
       f.contents = Buffer.from(
         contents.replace(
           /\(\"platform\/([^"]*)\"\)/g,
@@ -146,7 +152,7 @@ gulp.task('run-test', function (done) {
   });
 });
 
-gulp.task('prepare-test', gulp.parallel('tsc', copyPackageJson));
+gulp.task('prepare-test', gulp.parallel('tsc', copyPackageJson, testCopyWasmFiles));
 gulp.task('test', gulp.series('prepare-test', 'run-test'));
 gulp.task(
   'release',
@@ -158,3 +164,112 @@ gulp.task(
   ),
 );
 gulp.task('default', shell.task('yarn build-dev'));
+
+/**
+ * Downloads a URL following redirects, resolving with the final IncomingMessage.
+ */
+function followRedirects(url, maxRedirects = 10) {
+  return new Promise((resolve, reject) => {
+    const doGet = (currentUrl, redirectsLeft) => {
+      const lib = currentUrl.startsWith('https') ? https : http;
+      const req = lib.get(currentUrl, (res) => {
+        const status = res.statusCode || 0;
+        if (status >= 300 && status < 400 && res.headers.location) {
+          if (redirectsLeft <= 0) {
+            reject(new Error('Too many redirects'));
+            return;
+          }
+          const next = res.headers.location.startsWith('http')
+            ? res.headers.location
+            : new URL(res.headers.location, currentUrl).toString();
+          res.resume();
+          doGet(next, redirectsLeft - 1);
+          return;
+        }
+        resolve(res);
+      });
+      req.on('error', (err) => reject(err));
+    };
+    doGet(url, maxRedirects);
+  });
+}
+
+/**
+ * Downloads the given URL to destPath, following redirects.
+ */
+function downloadToFile(url, destPath) {
+  return followRedirects(url).then((res) => {
+    const status = res.statusCode || 0;
+    if (status !== 200) {
+      throw new Error(`Download failed with status ${status}: ${url}`);
+    }
+    return new Promise((resolve, reject) => {
+      const fileStream = fs.createWriteStream(destPath);
+      res.pipe(fileStream);
+      res.on('error', (err) => {
+        fileStream.close();
+        reject(err);
+      });
+      fileStream.on('finish', () => fileStream.close(() => resolve()));
+      fileStream.on('error', (err) => {
+        fileStream.close();
+        reject(err);
+      });
+    });
+  });
+}
+
+/**
+ * Downloads all tree-sitter WASM grammar files defined in wasm-versions.json
+ * into the ./wasm directory.
+ *
+ * Each entry in wasm-versions.json must have:
+ *   - repo:    GitHub repository in "owner/name" format
+ *   - version: release tag (e.g. "v0.23.2")
+ *   - asset:   (optional) asset filename on GitHub if it differs from the output filename
+ */
+gulp.task('download-wasm', async function () {
+  const versionsPath = path.join(__dirname, 'wasm-versions.json');
+  const wasmDir = path.join(__dirname, 'wasm');
+
+  if (!fs.existsSync(wasmDir)) {
+    fs.mkdirSync(wasmDir, { recursive: true });
+  }
+
+  const versions = JSON.parse(fs.readFileSync(versionsPath, 'utf8'));
+  const entries = Object.entries(versions);
+
+  for (const [outputFile, entry] of entries) {
+    const assetName = entry.asset || outputFile;
+    const url = `https://github.com/${entry.repo}/releases/download/${entry.version}/${assetName}`;
+    const destPath = path.join(wasmDir, outputFile);
+    console.log(`Downloading ${outputFile} from ${url}...`);
+    try {
+      await downloadToFile(url, destPath);
+      console.log(`  ✓ ${outputFile}`);
+    } catch (err) {
+      console.error(`  ✗ Failed to download ${outputFile}: ${err.message}`);
+    }
+  }
+
+  console.log('WASM download complete.');
+});
+
+async function testCopyWasmFiles() {
+  const destDir = path.join(__dirname, 'out', 'wasm');
+  fs.mkdirSync(destDir, { recursive: true });
+
+  const sources = fs
+    .readdirSync(path.join(__dirname, 'wasm'))
+    .filter((f) => f.endsWith('.wasm'))
+    .map((f) => path.join(__dirname, 'wasm', f));
+
+  for (const src of sources) {
+    fs.copyFileSync(src, path.join(destDir, path.basename(src)));
+  }
+
+  fs.copyFileSync(
+    path.join(__dirname, 'node_modules', 'web-tree-sitter', 'web-tree-sitter.wasm'),
+    path.join(__dirname, 'out', 'web-tree-sitter.wasm'),
+  );
+}

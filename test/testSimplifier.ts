@@ -16,6 +16,7 @@ import { globalState } from '../src/state/globalState';
 import { VimState } from '../src/state/vimState';
 import { StatusBar } from '../src/statusBar';
 import { TextEditor } from '../src/textEditor';
+import { TreeSitterManager } from '../src/treesitter/treeSitterManager';
 import { assertEqualLines, reloadConfiguration, setupWorkspace } from './testUtils';
 
 function newTestGeneric<T extends ITestObject | ITestWithRemapsObject>(
@@ -253,6 +254,14 @@ export async function testIt(testObj: ITestObject): Promise<ModeHandler> {
   // Generate a brand new ModeHandler for this editor
   ModeHandlerMap.clear();
   const [modeHandler, _] = await ModeHandlerMap.getOrCreate(editor);
+
+  if (Globals.mockConfiguration.treeSitter?.enable) {
+    await TreeSitterManager.initDocument(
+      editor.document.uri,
+      editor.document.languageId,
+      editor.document.getText(),
+    );
+  }
 
   assertDocState(modeHandler.vimState, start);
 

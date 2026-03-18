@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { SUPPORT_IME_SWITCHER, SUPPORT_NVIM } from 'platform/constants';
+import { SUPPORT_IME_SWITCHER, SUPPORT_NVIM, SUPPORT_TREESITTER } from 'platform/constants';
 import { Position } from 'vscode';
 import { IMovement } from '../actions/baseMotion';
 import { IEasyMotion } from '../actions/plugins/easymotion/types';
@@ -10,6 +10,7 @@ import { Cursor } from '../common/motion/cursor';
 import { configuration } from '../configuration/configuration';
 import { DotCommandStatus, Mode, NormalCommandState } from '../mode/mode';
 import { ModeData } from '../mode/modeData';
+import { TreeSitterManager } from '../treesitter/treeSitterManager';
 import { Logger } from '../util/logger';
 import { SearchDirection } from '../vimscript/pattern';
 import { HistoryTracker } from './../history/historyTracker';
@@ -67,6 +68,17 @@ export class VimState implements vscode.Disposable {
     return this.editor.document;
   }
 
+  /**
+   * The current tree-sitter syntax tree for this document, or `undefined` if
+   * tree-sitter is not supported on this platform, or no grammar is available
+   * for the document's language.
+   */
+  public get syntaxTree(): import('web-tree-sitter').Tree | undefined {
+    if (!SUPPORT_TREESITTER) {
+      return undefined;
+    }
+    return TreeSitterManager.getTree(this.document.uri);
+  }
   /**
    * Are multiple cursors currently present?
    */

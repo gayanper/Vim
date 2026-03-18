@@ -43,6 +43,7 @@ VSCodeVim is a Vim emulator for [Visual Studio Code](https://code.visualstudio.c
   - [ReplaceWithRegister](#replacewithregister)
   - [vim-textobj-entire](#vim-textobj-entire)
   - [vim-textobj-arguments](#vim-textobj-arguments)
+- [🌳 Tree-sitter text objects](#-tree-sitter-text-objects)
 - [🎩 VSCodeVim tricks!](#-vscodevim-tricks)
 - [📚 F.A.Q.](#-faq)
 - [❤️ Contributing](#️-contributing)
@@ -764,6 +765,55 @@ Usage examples:
 | vim.argumentObjectOpeningDelimiters | A list of opening delimiters | String list | ["(", "["]    |
 | vim.argumentObjectClosingDelimiters | A list of closing delimiters | String list | [")", "]"]    |
 | vim.argumentObjectSeparators        | A list of object separators  | String list | [","]         |
+
+## 🌳 Tree-sitter text objects
+
+VSCodeVim integrates with [tree-sitter](https://tree-sitter.github.io/) to provide
+syntax-aware text objects that work across many languages. Enable it in settings:
+
+```json
+"vim.treeSitter": {
+  "enable": true
+}
+```
+
+Supported languages: TypeScript, JavaScript (and JSX/TSX variants), Python, Go, Rust, Java.
+
+### Function text objects
+
+| Motion Command | Description                                        |
+| -------------- | -------------------------------------------------- |
+| `<operator>am` | Around the function — includes signature and body. |
+| `<operator>im` | Inside the function body — excludes the signature. |
+
+Usage examples:
+
+- `dam` - delete the entire function under the cursor.
+- `yim` - yank only the body of the function.
+
+### Assignment text objects
+
+Select the left-hand side (LHS) or right-hand side (RHS) of assignment statements and
+object/dict property pairs. Works for `=`, `+=`, `-=` etc., and `:` (object literals).
+
+| Motion Command  | Description                                      |
+| --------------- | ------------------------------------------------ |
+| `<operator>i=l` | Inside LHS — the variable, key, or pattern only. |
+| `<operator>a=l` | Around LHS — includes the assignment operator.   |
+| `<operator>i=r` | Inside RHS — the value expression only.          |
+| `<operator>a=r` | Around RHS — includes the assignment operator.   |
+
+Usage examples (for `const x = 42`):
+
+- `di=r` - delete the value (`42`), leaving `const x = `.
+- `da=r` - delete the operator and value (` = 42`), leaving `const x`.
+- `ci=l` - change just the variable name (`x`).
+- `ya=l` - yank `x =` (the LHS and operator).
+
+Object property example (for `{ key: "hello" }`):
+
+- `di=r` with cursor on the pair - delete `"hello"`, leaving `{ key:  }`.
+- `ci=l` with cursor on the pair - change `key`.
 
 ## 🎩 VSCodeVim tricks!
 

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 
+import { SUPPORT_TREESITTER } from 'platform/constants';
 import { ExCommandLine, SearchCommandLine } from './src/cmd_line/commandLine';
 import { configuration } from './src/configuration/configuration';
 import { Notation } from './src/configuration/notation';
@@ -13,6 +14,7 @@ import { CompositionState } from './src/state/compositionState';
 import { globalState } from './src/state/globalState';
 import { StatusBar } from './src/statusBar';
 import { taskQueue } from './src/taskQueue';
+import { TreeSitterManager } from './src/treesitter/treeSitterManager';
 import { Logger } from './src/util/logger';
 import { SpecialKeys } from './src/util/specialKeys';
 import { VSCodeContext } from './src/util/vscodeContext';
@@ -38,6 +40,11 @@ export async function getAndUpdateModeHandler(
   const [curHandler, isNew] = await ModeHandlerMap.getOrCreate(activeTextEditor);
   if (isNew) {
     extensionContext.subscriptions.push(curHandler);
+
+    if (SUPPORT_TREESITTER && configuration.treeSitter.enable) {
+      const doc = activeTextEditor.document;
+      void TreeSitterManager.initDocument(doc.uri, doc.languageId, doc.getText());
+    }
   }
 
   curHandler.vimState.editor = activeTextEditor;
@@ -122,7 +129,21 @@ export async function activate(context: vscode.ExtensionContext, handleLocal: bo
     vscode.workspace.onDidChangeConfiguration,
     async () => {
       Logger.info('Configuration changed');
+      const wasEnabled = configuration.treeSitter.enable;
       await loadConfiguration();
+
+      if (SUPPORT_TREESITTER) {
+        const isEnabled = configuration.treeSitter.enable;
+        if (!wasEnabled && isEnabled) {
+          // Tree-sitter was just enabled — parse all currently open documents
+          for (const doc of vscode.workspace.textDocuments) {
+            void TreeSitterManager.initDocument(doc.uri, doc.languageId, doc.getText());
+          }
+        } else if (wasEnabled && !isEnabled) {
+          // Tree-sitter was just disabled — free all trees
+          TreeSitterManager.dispose();
+        }
+      }
     },
     false,
   );
@@ -162,6 +183,14 @@ export async function activate(context: vscode.ExtensionContext, handleLocal: bo
         mh.vimState.historyTracker.currentContentChanges.push(...event.contentChanges);
       }
     }
+
+    if (SUPPORT_TREESITTER && configuration.treeSitter.enable) {
+      TreeSitterManager.applyEdit(
+        event.document.uri,
+        event.contentChanges,
+        event.document.getText(),
+      );
+    }
   });
 
   registerEventListener(
@@ -186,6 +215,9 @@ export async function activate(context: vscode.ExtensionContext, handleLocal: bo
 
         if (shouldDelete) {
           ModeHandlerMap.delete(uri);
+          if (SUPPORT_TREESITTER) {
+            TreeSitterManager.deleteDocument(uri);
+          }
         }
       }
     },

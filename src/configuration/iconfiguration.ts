@@ -62,6 +62,13 @@ export interface ICamelCaseMotionConfiguration {
   enable: boolean;
 }
 
+export interface ITreeSitterConfiguration {
+  /**
+   * Enable tree-sitter parsing for syntax-aware text objects and motions.
+   */
+  enable: boolean;
+}
+
 export interface ISmartQuotesConfiguration {
   /**
    * Enable SmartQuotes plugin or not
@@ -139,6 +146,11 @@ export interface IConfiguration {
    * CamelCaseMotion plugin options
    */
   camelCaseMotion: ICamelCaseMotionConfiguration;
+
+  /**
+   * Tree-sitter integration options
+   */
+  treeSitter: ITreeSitterConfiguration;
 
   /**
    * Use EasyMotion plugin?

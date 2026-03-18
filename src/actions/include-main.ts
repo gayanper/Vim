@@ -4,6 +4,9 @@ import './motion';
 import './operator';
 
 // commands
+import '../treesitter/assignmentTextObject';
+import '../treesitter/classTextObject';
+import '../treesitter/functionTextObject';
 import './commands/actions';
 import './commands/commandLine';
 import './commands/digraphs';

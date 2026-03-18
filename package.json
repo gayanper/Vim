@@ -625,6 +625,11 @@
           "markdownDescription": "Enable the [CamelCaseMotion](https://github.com/bkad/CamelCaseMotion) plugin for Vim.",
           "default": false
         },
+        "vim.treeSitter.enable": {
+          "type": "boolean",
+          "description": "Enable tree-sitter parsing for syntax-aware text objects and motions (e.g. `af`/`if` to select around/inside a function).",
+          "default": false
+        },
         "vim.easymotion": {
           "type": "boolean",
           "markdownDescription": "Enable the [EasyMotion](https://github.com/easymotion/vim-easymotion) plugin for Vim.",
@@ -1200,7 +1205,8 @@
     "prettier:check": "npx prettier --check .",
     "watch": "webpack -c webpack.dev.js --watch",
     "package": "yarn run vsce package --yarn --allow-star-activation",
-    "prepare": "husky"
+    "prepare": "husky",
+    "download-wasm": "gulp download-wasm"
   },
   "dependencies": {
     "diff-match-patch": "1.0.5",
@@ -1212,7 +1218,9 @@
     "process": "0.11.10",
     "queue": "^6.0.2",
     "untildify": "4.0.0",
-    "util": "0.12.5"
+    "url": "0.11.4",
+    "util": "0.12.5",
+    "web-tree-sitter": "0.26.7"
   },
   "devDependencies": {
     "@types/diff-match-patch": "1.0.36",
@@ -1228,6 +1236,7 @@
     "@vscode/vsce": "^3.6.2",
     "circular-dependency-plugin": "^5.2.2",
     "clean-webpack-plugin": "4.0.0",
+    "copy-webpack-plugin": "^14.0.0",
     "eslint": "^8.52.0",
     "eslint-config-prettier": "^10.0.0",
     "eslint-plugin-jsdoc": "^62.0.0",

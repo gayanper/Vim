@@ -7,6 +7,7 @@ const webpack = require('webpack');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const CircularDependencyPlugin = require('circular-dependency-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
 
 /**@type {import('webpack').Configuration}*/
 const config = {
@@ -67,6 +68,15 @@ const config = {
       // set the current working directory for displaying module paths
       cwd: process.cwd(),
     }),
+    new CopyPlugin({
+      patterns: [
+        { from: path.resolve(__dirname, 'wasm'), to: path.resolve(__dirname, 'out', 'wasm') },
+        {
+          from: require.resolve('web-tree-sitter/web-tree-sitter.wasm'),
+          to: path.resolve(__dirname, 'out', 'web-tree-sitter.wasm'),
+        },
+      ],
+    }),
   ],
 };
 
@@ -97,6 +107,10 @@ const nodelessConfig = {
       path: require.resolve('path-browserify'),
       process: require.resolve('process/browser'),
       util: require.resolve('util'),
+      fs: false,
+      'fs/promises': false,
+      url: require.resolve('url/'),
+      module: false,
     },
   },
   optimization: {

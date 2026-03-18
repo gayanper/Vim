@@ -1,0 +1,30 @@
+{
+  "tree-sitter-typescript.wasm": {
+    "repo": "tree-sitter/tree-sitter-typescript",
+    "version": "v0.23.2"
+  },
+  "tree-sitter-tsx.wasm": {
+    "repo": "tree-sitter/tree-sitter-typescript",
+    "version": "v0.23.2"
+  },
+  "tree-sitter-javascript.wasm": {
+    "repo": "tree-sitter/tree-sitter-javascript",
+    "version": "v0.25.0"
+  },
+  "tree-sitter-java.wasm": {
+    "repo": "tree-sitter/tree-sitter-java",
+    "version": "v0.23.5"
+  },
+  "tree-sitter-python.wasm": {
+    "repo": "tree-sitter/tree-sitter-python",
+    "version": "v0.23.6"
+  },
+  "tree-sitter-go.wasm": {
+    "repo": "tree-sitter/tree-sitter-go",
+    "version": "v0.25.0"
+  },
+  "tree-sitter-rust.wasm": {
+    "repo": "tree-sitter/tree-sitter-rust",
+    "version": "v0.24.0"
+  }
+}

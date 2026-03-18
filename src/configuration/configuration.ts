@@ -16,6 +16,7 @@ import {
   IKeyRemapping,
   IModeSpecificStrings,
   ITargetsConfiguration,
+  ITreeSitterConfiguration,
 } from './iconfiguration';
 
 import { SUPPORT_VIMRC } from 'platform/constants';
@@ -250,6 +251,10 @@ class Configuration implements IConfiguration {
 
   camelCaseMotion: ICamelCaseMotionConfiguration = {
     enable: true,
+  };
+
+  treeSitter: ITreeSitterConfiguration = {
+    enable: false,
   };
 
   replaceWithRegister = false;

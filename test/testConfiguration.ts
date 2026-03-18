@@ -27,6 +27,9 @@ export class Configuration implements IConfiguration {
   camelCaseMotion = {
     enable: false,
   };
+  treeSitter = {
+    enable: false,
+  };
   replaceWithRegister = false;
   smartRelativeLine = false;
   sneak = false;
